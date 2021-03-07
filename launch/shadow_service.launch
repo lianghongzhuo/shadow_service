@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+<!--    <node name="base_to_arm_base" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 arm_base base 100" />-->
+<!--    <include file="$(find shadow_service)/launch/bringup_with_motorhand.launch"/>-->
+    <node pkg="shadow_service" type="hand_motion_server.py" name="hand_motion_server" required="true" output="screen">
+        <param name="hand_type" value="left_hand"/>
+    </node>
+</launch>
