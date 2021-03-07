@@ -8,10 +8,9 @@
 from __future__ import print_function
 import rospy
 from sr_robot_commander.sr_hand_commander import SrHandCommander
-from shadow_grasp_rl_ros.srv import ShadowCommanderSrv, ShadowCommanderSrvResponse
+from shadow_service.srv import ShadowCommanderSrv, ShadowCommanderSrvResponse
 from get_joint_limits import get_joint_limits
 import numpy as np
-from IPython import embed
 
 
 class ShadowCommanderServer:
