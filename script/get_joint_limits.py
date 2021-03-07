@@ -63,7 +63,7 @@ class Robot(object):
 
 def get_joint_limits(hand_prefix="rh"):
     ros_pack = rospkg.RosPack()
-    robot_dir = ros_pack.get_path("shadow_grasp_rl_ros")
+    robot_dir = ros_pack.get_path("shadow_service")
     urdf_file = os.path.join(robot_dir, "urdf/ori_shadow_hand.urdf")
     with open(urdf_file, "r") as handle:
         urdf_strings = handle.read().replace("\n", "")
