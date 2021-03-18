@@ -14,8 +14,9 @@ import numpy as np
 
 
 class ShadowCommanderServer:
-    def __init__(self, safe_mode):
+    def __init__(self):
         self.hand_type = rospy.get_param("hand_motion_server/hand_type")
+        self.safe_mode = rospy.get_param("hand_motion_server/shadow_hand_safe_mode")
         if self.hand_type == "right_hand":
             self.name_prefix = "rh"
             self.hand_group = "right_hand"
@@ -24,7 +25,6 @@ class ShadowCommanderServer:
             self.hand_group = "hand"
         else:
             raise NotImplementedError
-        self.safe_mode = safe_mode
         self.hand_commander = SrHandCommander(name=self.hand_group)
         self.hand_limits = get_joint_limits()
         get_correct_joints = False
@@ -95,5 +95,5 @@ class ShadowCommanderServer:
 
 if __name__ == "__main__":
     rospy.init_node("shadow_commander_server")
-    server = ShadowCommanderServer(safe_mode=True)
+    server = ShadowCommanderServer()
     rospy.spin()
