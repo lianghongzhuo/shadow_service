@@ -27,11 +27,6 @@ class ShadowCommanderServer:
             raise NotImplementedError
         self.hand_commander = SrHandCommander(name=self.hand_group)
         self.hand_limits = get_joint_limits()
-        get_correct_joints = False
-        while not get_correct_joints:
-            self.hand_pos = self.hand_commander.get_joints_position()
-            if "{}_MFJ2".format(self.name_prefix) in self.hand_pos.keys():
-                get_correct_joints = True
         rospy.Service("shadow_commander_service", ShadowCommanderSrv, self.service_callback)
 
     def clip_hand_pos(self, hand_pos):
@@ -44,51 +39,45 @@ class ShadowCommanderServer:
     def service_callback(self, joints_msg):
         goal = joints_msg.joint_positions.data
         goal = self.clip_hand_pos(goal)
-
         # wrist
-        self.hand_pos.update({self.name_prefix + "_WRJ2": goal[0]})
-        self.hand_pos.update({self.name_prefix + "_WRJ1".format(self.name_prefix): goal[1]})
+        hand_joint_positions = {
+                                # wrist
+                                self.name_prefix + "_WRJ2": goal[0],
+                                self.name_prefix + "_WRJ1": goal[1],
+                                # first finger
+                                self.name_prefix + "_FFJ4": goal[2],
+                                self.name_prefix + "_FFJ3": goal[3],
+                                self.name_prefix + "_FFJ2": goal[4],
+                                self.name_prefix + "_FFJ1": goal[5],
+                                # middle finger
+                                self.name_prefix + "_MFJ4": goal[6],
+                                self.name_prefix + "_MFJ3": goal[7],
+                                self.name_prefix + "_MFJ2": goal[8],
+                                self.name_prefix + "_MFJ1": goal[9],
+                                # ring finger
+                                self.name_prefix + "_RFJ4": goal[10],
+                                self.name_prefix + "_RFJ3": goal[11],
+                                self.name_prefix + "_RFJ2": goal[12],
+                                self.name_prefix + "_RFJ1": goal[13],
+                                # little finger
+                                self.name_prefix + "_LFJ5": goal[14],
+                                self.name_prefix + "_LFJ4": goal[15],
+                                self.name_prefix + "_LFJ3": goal[16],
+                                self.name_prefix + "_LFJ2": goal[17],
+                                self.name_prefix + "_LFJ1": goal[18],
+                                # thumb
+                                self.name_prefix + "_THJ5": goal[19],
+                                self.name_prefix + "_THJ4": goal[20],
+                                self.name_prefix + "_THJ3": goal[21],
+                                self.name_prefix + "_THJ2": goal[22],
+                                self.name_prefix + "_THJ1": goal[23],
+                                }
 
-        # first finger
-        self.hand_pos.update({self.name_prefix + "_FFJ4": goal[2]})
-        self.hand_pos.update({self.name_prefix + "_FFJ3": goal[3]})
-        self.hand_pos.update({self.name_prefix + "_FFJ2": goal[4]})
-
-        # middle finger
-        self.hand_pos.update({self.name_prefix + "_MFJ4": goal[6]})
-        self.hand_pos.update({self.name_prefix + "_MFJ3": goal[7]})
-        self.hand_pos.update({self.name_prefix + "_MFJ2": goal[8]})
-
-        # ring finger
-        self.hand_pos.update({self.name_prefix + "_RFJ4": goal[10]})
-        self.hand_pos.update({self.name_prefix + "_RFJ3": goal[11]})
-        self.hand_pos.update({self.name_prefix + "_RFJ2": goal[12]})
-
-        # little finger
-        self.hand_pos.update({self.name_prefix + "_LFJ5": goal[14]})
-        self.hand_pos.update({self.name_prefix + "_LFJ4": goal[15]})
-        self.hand_pos.update({self.name_prefix + "_LFJ3": goal[16]})
-        self.hand_pos.update({self.name_prefix + "_LFJ2": goal[17]})
-
-        # thumb
-        self.hand_pos.update({self.name_prefix + "_THJ5": goal[19]})
-        self.hand_pos.update({self.name_prefix + "_THJ4": goal[20]})
-        self.hand_pos.update({self.name_prefix + "_THJ3": goal[21]})
-        self.hand_pos.update({self.name_prefix + "_THJ2": goal[22]})
-
-        # special joints for our left hand
-        if self.hand_type == "left_hand":
-            self.hand_pos.update({self.name_prefix + "_FFJ1".format(self.name_prefix): goal[5]})
-            self.hand_pos.update({self.name_prefix + "_MFJ1".format(self.name_prefix): goal[9]})
-            self.hand_pos.update({self.name_prefix + "_RFJ1".format(self.name_prefix): goal[13]})
-            self.hand_pos.update({self.name_prefix + "_LFJ1".format(self.name_prefix): goal[18]})
-            self.hand_pos.update({self.name_prefix + "_THJ1".format(self.name_prefix): goal[23]})
-        rospy.loginfo("getting shadow hand command {}".format(self.hand_pos))
-
+        rospy.loginfo("getting shadow hand command {}".format(hand_joint_positions))
         if self.safe_mode:
-            self.hand_commander.move_to_joint_value_target(self.hand_pos, angle_degrees=False)
+            self.hand_commander.move_to_joint_value_target(hand_joint_positions, angle_degrees=False)
         else:
-            self.hand_commander.move_to_joint_value_target_unsafe(self.hand_pos, 0.3, False, angle_degrees=False)
+            self.hand_commander.move_to_joint_value_target_unsafe(hand_joint_positions, 0.3, False, angle_degrees=False)
         rospy.loginfo("Next one please ---->")
         return ShadowCommanderSrvResponse(True)
 
