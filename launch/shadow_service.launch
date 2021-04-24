@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="hand_type" default="left_hand" doc="Hand type can be left_hand or right_hand"/>
+    <arg name="shadow_hand_safe_mode" default="true" doc="If true, use safe mode to control shadow hand"/>
     <node pkg="shadow_service" type="hand_motion_server.py" name="hand_motion_server" required="true" output="screen">
-        <param name="hand_type" value="left_hand"/>
-        <param name="shadow_hand_safe_mode" value="true"/>
+        <param name="hand_type" value="$(arg hand_type)"/>
+        <param name="shadow_hand_safe_mode" value="$(arg shadow_hand_safe_mode)"/>
     </node>
 </launch>
