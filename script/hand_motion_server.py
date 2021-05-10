@@ -15,18 +15,21 @@ import numpy as np
 
 class ShadowCommanderServer:
     def __init__(self):
-        self.hand_type = rospy.get_param("hand_motion_server/hand_type")
-        self.safe_mode = rospy.get_param("hand_motion_server/shadow_hand_safe_mode")
+        self.hand_type = rospy.get_param("~hand_type")
+        self.safe_mode = rospy.get_param("~shadow_hand_safe_mode")
         if self.hand_type == "right_hand":
-            self.name_prefix = "rh"
+            name_prefix = "rh"
             self.hand_group = "right_hand"
         elif self.hand_type == "left_hand":
-            self.name_prefix = "lh"
+            name_prefix = "lh"
             self.hand_group = "hand"
         else:
             raise NotImplementedError
         self.hand_commander = SrHandCommander(name=self.hand_group)
         self.hand_limits = get_joint_limits()
+        self.joint_names = []
+        for joint in JOINT_NAMES:
+            self.joint_names.append(joint.format(name_prefix))
         rospy.Service("shadow_commander_service", ShadowCommanderSrv, self.service_callback)
 
     def clip_hand_pos(self, hand_pos):
@@ -36,13 +39,11 @@ class ShadowCommanderServer:
         hand_pos = if_upper_limit * self.hand_limits[:, 1] + np.logical_not(if_upper_limit) * hand_pos
         return hand_pos
 
-    def service_callback(self, joints_msg):
-        goal = joints_msg.joint_positions.data
+    def service_callback(self, msg):
+        goal = msg.joint_positions.data
         goal = self.clip_hand_pos(goal)
-        # wrist
         hand_joint_positions = {}
-        for i, joint in enumerate(JOINT_NAMES):
-            joint = joint.format(self.name_prefix)
+        for i, joint in enumerate(self.joint_names):
             hand_joint_positions[joint] = goal[i]
 
         rospy.loginfo("getting shadow hand command {}".format(goal))
@@ -55,6 +56,6 @@ class ShadowCommanderServer:
 
 
 if __name__ == "__main__":
-    rospy.init_node("shadow_commander_server")
+    rospy.init_node("shadow_commander_server", anonymous=True)
     server = ShadowCommanderServer()
     rospy.spin()
