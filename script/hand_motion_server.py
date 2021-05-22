@@ -8,10 +8,10 @@
 from __future__ import print_function
 import rospy
 from moveit_commander import MoveGroupCommander
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from shadow_service.srv import ShadowCommanderSrv, ShadowCommanderSrvResponse
 from get_joint_limits import get_joint_limits, JOINT_NAMES
 import numpy as np
+from sr_robot_commander.sr_hand_commander import SrHandCommander
 
 
 class ShadowCommanderServer:
@@ -29,8 +29,8 @@ class ShadowCommanderServer:
         if self.safe_mode:
             self.hand_commander = MoveGroupCommander(self.hand_group)
         else:
-            controller_name = "/hand/{}_trajectory_controller/command".format(name_prefix)
-            self.hand_pub = rospy.Publisher(controller_name, JointTrajectory, queue_size=1, latch=True)
+            self.hand_commander = SrHandCommander(name=self.hand_group)
+
         self.hand_limits = get_joint_limits()
         self.joint_names = []
         for joint in JOINT_NAMES:
@@ -48,22 +48,16 @@ class ShadowCommanderServer:
         goal = msg.joint_positions.data
         goal = self.clip_hand_pos(goal)
         rospy.loginfo("getting shadow hand command {}".format(goal))
+        hand_joint_positions = {}
+        for i, joint in enumerate(self.joint_names):
+            hand_joint_positions[joint] = goal[i]
         if self.safe_mode:
-            hand_joint_positions = {}
-            for i, joint in enumerate(self.joint_names):
-                hand_joint_positions[joint] = goal[i]
             self.hand_commander.set_start_state_to_current_state()
             self.hand_commander.set_joint_value_target(hand_joint_positions)
             self.hand_commander.go(wait=True)
         else:
-            # simple version of shadow hand commander function: move_to_joint_value_target_unsafe()
-            trajectory = JointTrajectory()
-            trajectory.joint_names = self.joint_names
-            trajectory.points.append(JointTrajectoryPoint())
-            trajectory.points[0].positions = goal
-            trajectory.points[0].time_from_start.secs = 1
-            self.hand_pub.publish(trajectory)
-            rospy.sleep(0.5)
+            self.hand_commander.move_to_joint_value_target_unsafe(hand_joint_positions, 0.5, wait=True,
+                                                                  angle_degrees=False)
         rospy.loginfo("Next one please ---->")
         return ShadowCommanderSrvResponse(True)
 
