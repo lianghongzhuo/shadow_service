@@ -11,7 +11,7 @@ from moveit_commander import MoveGroupCommander
 from shadow_service.srv import ShadowCommanderSrv, ShadowCommanderSrvResponse
 from get_joint_limits import get_joint_limits, JOINT_NAMES
 import numpy as np
-from sr_robot_commander.sr_hand_commander import SrHandCommander
+from sr_robot_commander import SrHandCommander
 
 
 class ShadowCommanderServer:
@@ -27,9 +27,9 @@ class ShadowCommanderServer:
         else:
             raise NotImplementedError
         if self.safe_mode:
-            self.hand_commander = MoveGroupCommander(self.hand_group)
+            self.moveit_commander = MoveGroupCommander(self.hand_group)
         else:
-            self.hand_commander = SrHandCommander(name=self.hand_group)
+            self.hand_commander = SrHandCommander(name=self.hand_group, joint_state_prefix="hand/")
 
         self.hand_limits = get_joint_limits()
         self.joint_names = []
@@ -52,9 +52,9 @@ class ShadowCommanderServer:
         for i, joint in enumerate(self.joint_names):
             hand_joint_positions[joint] = goal[i]
         if self.safe_mode:
-            self.hand_commander.set_start_state_to_current_state()
-            self.hand_commander.set_joint_value_target(hand_joint_positions)
-            self.hand_commander.go(wait=True)
+            self.moveit_commander.set_start_state_to_current_state()
+            self.moveit_commander.set_joint_value_target(hand_joint_positions)
+            self.moveit_commander.go(wait=True)
         else:
             self.hand_commander.move_to_joint_value_target_unsafe(hand_joint_positions, 0.5, wait=True,
                                                                   angle_degrees=False)

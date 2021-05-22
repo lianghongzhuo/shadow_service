@@ -60,7 +60,7 @@ class SrRobotCommander(object):
     Base class for hand and arm commanders.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, joint_state_prefix):
         """
         Initialize MoveGroupCommander object.
         @param name - name of the MoveIt group.
@@ -79,9 +79,9 @@ class SrRobotCommander(object):
         self._planning_scene = PlanningSceneInterface()
 
         self._joint_states_lock = threading.Lock()
-        self._joint_states_listener = \
-            rospy.Subscriber("joint_states", JointState,
-                             self._joint_states_callback, queue_size=1)
+        self._joint_state_prefix = joint_state_prefix
+        self._joint_states_listener = rospy.Subscriber("{}joint_states".format(joint_state_prefix), JointState,
+                                                       self._joint_states_callback, queue_size=1)
         self._joints_position = {}
         self._joints_velocity = {}
         self._joints_effort = {}
@@ -716,6 +716,8 @@ class SrRobotCommander(object):
         self._action_running = {}
 
         for controller_name in controller_list.keys():
+            if self._joint_state_prefix != "" and self._joint_state_prefix not in controller_name:
+                continue
             self._action_running[controller_name] = False
             service_name = controller_name + "/follow_joint_trajectory"
             self._clients[controller_name] = SimpleActionClient(service_name,
@@ -979,7 +981,8 @@ class SrHandCommander(SrRobotCommander):
 
     __set_force_srv = {}
 
-    def __init__(self, name=None, prefix=None, hand_parameters=None, hand_serial=None, hand_number=0):
+    def __init__(self, name=None, prefix=None, hand_parameters=None, hand_serial=None, hand_number=0,
+                 joint_state_prefix=""):
         """
         Initialize the hand commander, using either a name + prefix, or the parameters returned by the hand finder.
         @param name - name of the MoveIt group
@@ -1021,7 +1024,7 @@ class SrHandCommander(SrRobotCommander):
             if prefix is None:
                 prefix = "rh_"
 
-        super(SrHandCommander, self).__init__(name)
+        super(SrHandCommander, self).__init__(name, joint_state_prefix=joint_state_prefix)
 
         if not self._hand_h:
             self._tactiles = TactileReceiver(prefix)
