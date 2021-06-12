@@ -46,6 +46,7 @@ class ShadowCommanderServer:
 
     def service_callback(self, msg):
         goal = msg.joint_positions.data
+        time_limit = msg.time_limit.data
         goal = self.clip_hand_pos(goal)
         rospy.loginfo("getting shadow hand command {}".format(goal))
         hand_joint_positions = {}
@@ -56,7 +57,7 @@ class ShadowCommanderServer:
             self.moveit_commander.set_joint_value_target(hand_joint_positions)
             self.moveit_commander.go(wait=True)
         else:
-            self.hand_commander.move_to_joint_value_target_unsafe(hand_joint_positions, 0.5, wait=True,
+            self.hand_commander.move_to_joint_value_target_unsafe(hand_joint_positions, time_limit, wait=True,
                                                                   angle_degrees=False)
         rospy.loginfo("Next one please ---->")
         return ShadowCommanderSrvResponse(True)

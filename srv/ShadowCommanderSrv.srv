@@ -1,3 +1,4 @@
 std_msgs/Float64MultiArray joint_positions
+std_msgs/Float64 time_limit
 ---
 bool success
