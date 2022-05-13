@@ -57,6 +57,8 @@ class ShadowCommanderServer:
             self.moveit_commander.set_joint_value_target(hand_joint_positions)
             self.moveit_commander.go(wait=True)
         else:
+            # del hand_joint_positions["lh_WRJ1"]
+            # del hand_joint_positions["lh_WRJ2"]
             self.hand_commander.move_to_joint_value_target_unsafe(hand_joint_positions, time_limit, wait=True,
                                                                   angle_degrees=False)
         rospy.loginfo("Next one please ---->")
