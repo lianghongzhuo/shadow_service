@@ -3,13 +3,14 @@ import os
 import urdf_parser_py
 import numpy as np
 from urdf_parser_py.urdf import URDF
-
-JOINT_NAMES = ["{}_WRJ2", "{}_WRJ1",
+WRIST_JOINT_NAMES = ["{}_WRJ2", "{}_WRJ1"]
+FINGER_JOINT_NAMES = [
                "{}_FFJ4", "{}_FFJ3", "{}_FFJ2", "{}_FFJ1",
                "{}_MFJ4", "{}_MFJ3", "{}_MFJ2", "{}_MFJ1",
                "{}_RFJ4", "{}_RFJ3", "{}_RFJ2", "{}_RFJ1",
                "{}_LFJ5", "{}_LFJ4", "{}_LFJ3", "{}_LFJ2", "{}_LFJ1",
                "{}_THJ5", "{}_THJ4", "{}_THJ3", "{}_THJ2", "{}_THJ1"]
+JOINT_NAMES = WRIST_JOINT_NAMES + FINGER_JOINT_NAMES
 
 
 class JointLimit(object):

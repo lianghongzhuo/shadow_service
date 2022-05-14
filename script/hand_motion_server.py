@@ -9,7 +9,7 @@ from __future__ import print_function
 import rospy
 from moveit_commander import MoveGroupCommander
 from shadow_service.srv import ShadowCommanderSrv, ShadowCommanderSrvResponse
-from get_joint_limits import get_joint_limits, JOINT_NAMES
+from get_joint_limits import get_joint_limits, WRIST_JOINT_NAMES, FINGER_JOINT_NAMES
 import numpy as np
 import math
 import copy
@@ -25,13 +25,15 @@ class ShadowCommanderServer:
         if self.hand_type == "right_hand":
             self.name_prefix = "rh"
             self.hand_group = "right_hand"
+            self.node_prefix = "hand/"
         elif self.hand_type == "left_hand":
             self.name_prefix = "lh"
+            self.node_prefix = "hand/"
             self.hand_group = "hand"
         else:
             raise NotImplementedError
-        self.controller_list = ["hand/{}_trajectory_controller".format(self.name_prefix),
-                                "hand/{}_wr_trajectory_controller".format(self.name_prefix)]
+        self.controller_list = ["{}{}_trajectory_controller".format(self.node_prefix, self.name_prefix),
+                                "{}{}_wr_trajectory_controller".format(self.node_prefix, self.name_prefix)]
 
         if self.safe_mode:
             self.moveit_commander = MoveGroupCommander(self.hand_group)
@@ -39,11 +41,15 @@ class ShadowCommanderServer:
             self._clients = {}
             self._set_up_action_client()
         self.hand_limits = get_joint_limits()
-        self.joint_names = []
-        for joint in JOINT_NAMES:
-            self.joint_names.append(joint.format(self.name_prefix))
-        self.controller_joints = {self.controller_list[1]: self.joint_names[:2],
-                                  self.controller_list[0]: self.joint_names[2:]}
+        self.wrist_joint_names = []
+        for joint in WRIST_JOINT_NAMES:
+            self.wrist_joint_names.append(joint.format(self.name_prefix))
+        self.finger_joint_names = []
+        for joint in FINGER_JOINT_NAMES:
+            self.finger_joint_names.append(joint.format(self.name_prefix))
+        self.joint_names = self.wrist_joint_names + self.finger_joint_names
+        self.controller_joints = {self.controller_list[1]: self.wrist_joint_names,
+                                  self.controller_list[0]: self.finger_joint_names}
         rospy.Service("shadow_commander_service", ShadowCommanderSrv, self.service_callback)
 
     def clip_hand_pos(self, hand_pos):
@@ -100,15 +106,14 @@ class ShadowCommanderServer:
         if angle_degrees:
             joint_states_cpy.update((joint, math.radians(i)) for joint, i in joint_states_cpy.items())
 
-        for i, controller in enumerate(self._clients):
-            controller_joints = self.controller_joints[controller]
+        for controller in self._clients.keys():
             goal = FollowJointTrajectoryGoal()
             goal.trajectory.joint_names = []
             point = JointTrajectoryPoint()
             point.positions = []
 
             for x in joint_states_cpy.keys():
-                if x in controller_joints:
+                if x in self.controller_joints[controller]:
                     goal.trajectory.joint_names.append(x)
                     point.positions.append(joint_states_cpy[x])
 

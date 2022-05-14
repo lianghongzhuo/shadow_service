@@ -8,7 +8,7 @@
 from __future__ import print_function
 import rospy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from get_joint_limits import JOINT_NAMES
+from get_joint_limits import FINGER_JOINT_NAMES
 
 
 def main(name_prefix="lh"):
@@ -16,12 +16,12 @@ def main(name_prefix="lh"):
     hand_pub = rospy.Publisher(controller_name, JointTrajectory, queue_size=1, latch=True)
     # simple version of shadow hand commander function: move_to_joint_value_target_unsafe()
     joint_names = []
-    for joint in JOINT_NAMES:
+    for joint in FINGER_JOINT_NAMES:
         joint_names.append(joint.format(name_prefix))
     trajectory = JointTrajectory()
     trajectory.joint_names = joint_names
     trajectory.points.append(JointTrajectoryPoint())
-    goal = [0] * 24
+    goal = [0] * len(FINGER_JOINT_NAMES)
     trajectory.points[0].positions = goal
     trajectory.points[0].time_from_start.secs = 1
     hand_pub.publish(trajectory)
